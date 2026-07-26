@@ -17,11 +17,16 @@ const isApiRoute = createRouteMatcher(['/api/(.*)']);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isApiRoute(req)) {
-    const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
-    const { success } = await ratelimit.limit(ip);
-    
-    if (!success) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+    try {
+      const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
+      const { success } = await ratelimit.limit(ip);
+      
+      if (!success) {
+        return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      }
+    } catch (error) {
+      console.error("Rate limiting error:", error);
+      // Optionally continue request if rate limit fails
     }
   }
 });
