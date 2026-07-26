@@ -48,8 +48,16 @@ Schema:
     });
 
     let content = response.choices[0]?.message?.content || "{}";
+    
+    // Remove reasoning tags if any
+    content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
     if (content.startsWith("```json")) content = content.replace(/^```json\n/, "").replace(/\n```$/, "");
     else if (content.startsWith("```")) content = content.replace(/^```\n/, "").replace(/\n```$/, "");
+
+    // Fallback regex extraction if there's still text before/after
+    const jsonMatch = content.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+    if (jsonMatch) content = jsonMatch[0];
 
     const parsedJson = JSON.parse(content);
     const mindmap = MindMapSchema.parse(parsedJson);
