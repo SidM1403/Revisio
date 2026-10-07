@@ -24,7 +24,13 @@ export async function POST(req: Request) {
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     const cacheKey = `summary:${hashHex}`;
 
-    const cachedSummary = await redis.get<string>(cacheKey);
+    let cachedSummary = null;
+    try {
+      cachedSummary = await redis.get<string>(cacheKey);
+    } catch (e) {
+      console.warn("Redis get failed:", e);
+    }
+
 
     if (cachedSummary) {
       const readableStream = new ReadableStream({
@@ -70,7 +76,11 @@ export async function POST(req: Request) {
         }
         controller.close();
         
-        await redis.setex(cacheKey, 60 * 60 * 24 * 7, fullResponse); // Cache for 7 days
+        try {
+          await redis.setex(cacheKey, 60 * 60 * 24 * 7, fullResponse); // Cache for 7 days
+        } catch (e) {
+          console.warn("Redis set failed:", e);
+        }
       }
     });
 

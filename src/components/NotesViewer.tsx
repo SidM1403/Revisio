@@ -44,6 +44,15 @@ export default function NotesViewer() {
         body: JSON.stringify({ text: rawText, level, persona }),
       });
 
+      if (!res.ok) {
+        let errStr = `HTTP error! status: ${res.status}`;
+        try {
+          const errData = await res.json();
+          if (errData.error) errStr = errData.error;
+        } catch(e) {}
+        throw new Error(errStr);
+      }
+
       if (!res.body) throw new Error('No response body');
 
       const reader = res.body.getReader();
@@ -78,6 +87,15 @@ export default function NotesViewer() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: originalText, targetLanguage: targetLang }),
       });
+
+      if (!res.ok) {
+        let errStr = `HTTP error! status: ${res.status}`;
+        try {
+          const errData = await res.json();
+          if (errData.error) errStr = errData.error;
+        } catch(e) {}
+        throw new Error(errStr);
+      }
 
       if (!res.body) throw new Error('No response body');
 
