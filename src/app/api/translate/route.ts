@@ -26,13 +26,18 @@ Maintain all markdown formatting, code blocks, and structure exactly. Only outpu
 
     const readableStream = new ReadableStream({
       async start(controller) {
-        for await (const chunk of stream) {
-          const content = chunk.choices[0]?.delta?.content || "";
-          if (content) {
-            controller.enqueue(new TextEncoder().encode(content));
+        try {
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || "";
+            if (content) {
+              controller.enqueue(new TextEncoder().encode(content));
+            }
           }
+        } catch (err: any) {
+          controller.enqueue(new TextEncoder().encode(`\n\n[Stream Error: ${err.message}]`));
+        } finally {
+          controller.close();
         }
-        controller.close();
       }
     });
 

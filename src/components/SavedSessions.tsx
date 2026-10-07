@@ -7,6 +7,7 @@ export default function SavedSessions({ isOpen, onClose }: { isOpen: boolean, on
   const { setNotes, setSummary } = useNotesStore();
   const [sessions, setSessions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -16,6 +17,7 @@ export default function SavedSessions({ isOpen, onClose }: { isOpen: boolean, on
 
   const fetchSessions = async (retries = 3) => {
     setIsLoading(true);
+    setError(null);
     try {
       const res = await fetch('/api/notes/history');
       if (res.ok) {
@@ -27,10 +29,11 @@ export default function SavedSessions({ isOpen, onClose }: { isOpen: boolean, on
         setTimeout(() => fetchSessions(retries - 1), 5000);
         return; // Don't turn off loading state yet
       } else {
-        console.error("Failed to fetch sessions, status:", res.status);
+        throw new Error(`Failed to load history (Status: ${res.status})`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError(err.message || 'Failed to fetch sessions');
     } finally {
       setIsLoading(false);
     }
@@ -74,6 +77,10 @@ export default function SavedSessions({ isOpen, onClose }: { isOpen: boolean, on
           {isLoading ? (
             <div className="flex justify-center py-10">
                <span className="w-6 h-6 border-2 border-[#6dfabc]/30 border-t-[#6dfabc] rounded-full animate-spin"></span>
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-400 text-sm mt-10">
+              <p>⚠️ {error}</p>
             </div>
           ) : sessions.length === 0 ? (
             <div className="text-center text-gray-500 text-sm mt-10">

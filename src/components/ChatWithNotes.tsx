@@ -34,6 +34,15 @@ export default function ChatWithNotes({ isOpen, onClose }: { isOpen: boolean, on
         body: JSON.stringify({ messages: chatHistory, context: rawText }),
       });
 
+      if (!res.ok) {
+        let errStr = `HTTP error! status: ${res.status}`;
+        try {
+          const errData = await res.json();
+          if (errData.error) errStr = errData.error;
+        } catch(e) {}
+        throw new Error(errStr);
+      }
+
       if (!res.body) throw new Error('No response body');
 
       const reader = res.body.getReader();
@@ -52,8 +61,13 @@ export default function ChatWithNotes({ isOpen, onClose }: { isOpen: boolean, on
           return updated;
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1].content = `⚠️ Error: ${error.message || 'Something went wrong'}`;
+        return updated;
+      });
     } finally {
       setIsTyping(false);
     }

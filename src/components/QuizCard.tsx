@@ -74,7 +74,10 @@ export default function QuizCard() {
         body: JSON.stringify({ text: rawText, difficulty: examMode ? 'hard' : 'medium', count: examMode ? 10 : 5 }),
       });
 
-      if (!res.ok) throw new Error('Failed to generate quiz');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to generate quiz');
+      }
 
       const data = await res.json();
       if (data && data.length > 0) {

@@ -25,12 +25,15 @@ export default function PlannerTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: rawText, durationDays: duration }),
       });
-      if (!res.ok) throw new Error('Failed to generate plan');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to generate plan');
+      }
       const data = await res.json();
       setSchedule(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to generate schedule.');
+      alert(err.message || 'Failed to generate schedule.');
     } finally {
       setIsGenerating(false);
     }

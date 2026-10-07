@@ -67,19 +67,25 @@ export async function POST(req: Request) {
 
     const readableStream = new ReadableStream({
       async start(controller) {
-        for await (const chunk of stream) {
-          const content = chunk.choices[0]?.delta?.content || "";
-          if (content) {
-            fullResponse += content;
-            controller.enqueue(new TextEncoder().encode(content));
-          }
-        }
-        controller.close();
-        
         try {
-          await redis.setex(cacheKey, 60 * 60 * 24 * 7, fullResponse); // Cache for 7 days
-        } catch (e) {
-          console.warn("Redis set failed:", e);
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || "";
+            if (content) {
+              fullResponse += content;
+              controller.enqueue(new TextEncoder().encode(content));
+            }
+          }
+        } catch (err: any) {
+          const errMsg = `\n\n[Stream Error: ${err.message}]`;
+          fullResponse += errMsg;
+          controller.enqueue(new TextEncoder().encode(errMsg));
+        } finally {
+          controller.close();
+          try {
+            await redis.setex(cacheKey, 60 * 60 * 24 * 7, fullResponse); // Cache for 7 days
+          } catch (e) {
+            console.warn("Redis set failed:", e);
+          }
         }
       }
     });

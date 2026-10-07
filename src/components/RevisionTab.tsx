@@ -34,14 +34,17 @@ export default function RevisionTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: rawText, count: 10 }),
       });
-      if (!res.ok) throw new Error('Failed to generate cards');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to generate cards');
+      }
       
       const newCards = await res.json();
       await addCards(newCards);
       await loadCards();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Failed to generate flashcards.');
+      alert(error.message || 'Failed to generate flashcards.');
     } finally {
       setIsGenerating(false);
     }
